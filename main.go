@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"golang.org/x/net/websocket"
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 type Server struct {
@@ -49,6 +51,18 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 
 }
 
+func (s *Server) imitateBookOrder(ws *websocket.Conn) {
+	log.Println("Client from ::: ", ws.RemoteAddr())
+
+	for {
+		payload := []byte(fmt.Sprintf("Order from client ::: %d", time.Now().UnixNano()))
+
+		ws.Write(payload)
+		time.Sleep(time.Second * 3)
+
+	}
+}
+
 func (s *Server) broadcast(data []byte) {
 
 	for ws := range s.conns {
@@ -68,6 +82,7 @@ func main() {
 	server := newServer()
 
 	http.Handle("/addr", websocket.Handler(server.handleWs))
+	http.Handle("/book", websocket.Handler(server.imitateBookOrder))
 
 	log.Fatal(http.ListenAndServe(":3000", nil))
 
